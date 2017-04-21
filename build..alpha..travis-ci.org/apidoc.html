@@ -1,0 +1,291 @@
+<div class="apidocDiv">
+<style>
+/*csslint
+*/
+.apidocDiv {
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.apidocDiv a[href] {
+    color: #33f;
+    font-weight: bold;
+    text-decoration: none;
+}
+.apidocDiv a[href]:hover {
+    text-decoration: underline;
+}
+.apidocCodeCommentSpan {
+    background: #bbf;
+    color: #000;
+    display: block;
+}
+.apidocCodeKeywordSpan {
+    color: #d00;
+    font-weight: bold;
+}
+.apidocCodePre {
+    background: #eef;
+    border: 1px solid;
+    color: #777;
+    padding: 5px;
+    white-space: pre-wrap;
+}
+.apidocFooterDiv {
+    margin-top: 20px;
+    text-align: center;
+}
+.apidocModuleLi {
+    margin-top: 10px;
+}
+.apidocSectionDiv {
+    border-top: 1px solid;
+    margin-top: 20px;
+}
+.apidocSignatureSpan {
+    color: #777;
+    font-weight: bold;
+}
+</style>
+<h1>api documentation for
+    <a
+
+    >paypal-ipn (v3.0.0)</a>
+</h1>
+<h4>Package for verifying Paypal IPN messages</h4>
+<div class="apidocSectionDiv"><a
+    href="#apidoc.tableOfContents"
+    id="apidoc.tableOfContents"
+><h1>table of contents</h1></a><ol>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.paypal-ipn">module paypal-ipn</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.paypal-ipn.verify">
+            function <span class="apidocSignatureSpan">paypal-ipn.</span>verify
+            <span class="apidocSignatureSpan">(params, settings, callback)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <span class="apidocSignatureSpan">object <span class="apidocSignatureSpan">paypal-ipn.</span>paypal_ipn</span>
+
+        </li>
+
+    </ol></li>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.paypal-ipn.paypal_ipn">module paypal-ipn.paypal_ipn</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.paypal-ipn.paypal_ipn.verify">
+            function <span class="apidocSignatureSpan">paypal-ipn.paypal_ipn.</span>verify
+            <span class="apidocSignatureSpan">(params, settings, callback)</span>
+            </a>
+
+        </li>
+
+    </ol></li>
+
+</ol></div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.paypal-ipn" id="apidoc.module.paypal-ipn">module paypal-ipn</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.paypal-ipn.verify" id="apidoc.element.paypal-ipn.verify">
+        function <span class="apidocSignatureSpan">paypal-ipn.</span>verify
+        <span class="apidocSignatureSpan">(params, settings, callback)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function verify(params, settings, callback) {
+  //Settings are optional, use default settings if not set
+  if (typeof callback === &#x27;undefined&#x27; &#x26;&#x26; typeof settings === &#x27;function&#x27;) {
+    callback = settings;
+    settings = {
+      &#x27;allow_sandbox&#x27;: false
+    };
+  }
+
+  if (typeof params === &#x27;undefined&#x27;) {
+    process.nextTick(function () {
+      callback(new Error(&#x27;No params were passed to ipn.verify&#x27;));
+    });
+    return;
+  }
+
+  params.cmd = &#x27;_notify-validate&#x27;;
+
+  var body = qs.stringify(params);
+
+  //Set up the request to paypal
+  var req_options = {
+    host: (params.test_ipn) ? SANDBOX_URL : REGULAR_URL,
+    method: &#x27;POST&#x27;,
+    path: &#x27;/cgi-bin/webscr&#x27;,
+    headers: {&#x27;Content-Length&#x27;: body.length}
+  };
+
+  if (params.test_ipn &#x26;&#x26; !settings.allow_sandbox) {
+    process.nextTick(function () {
+      callback(new Error(&#x27;Received request with test_ipn parameter while sandbox is disabled&#x27;));
+    });
+    return;
+  }
+
+  var req = https.request(req_options, function paypal_request(res) {
+    var data = [];
+
+    res.on(&#x27;data&#x27;, function paypal_response(d) {
+      data.push(d);
+    });
+
+    res.on(&#x27;end&#x27;, function response_end() {
+      var response = data.join(&#x27;&#x27;);
+
+      //Check if IPN is valid
+      if (response === &#x27;VERIFIED&#x27;) {
+        callback(null, response);
+      } else {
+        callback(new Error(&#x27;IPN Verification status: &#x27; + response));
+      }
+    });
+  });
+
+  //Add the post parameters to the request body
+  req.write(body);
+
+  //Request error
+  req.on(&#x27;error&#x27;, callback);
+
+  req.end();
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+$ npm install paypal-ipn
+```
+
+## Usage
+There is only one function, `verify`, which is used to verify any IPN messages you receive:
+
+```javascript
+ipn.<span class="apidocCodeKeywordSpan">verify</span>(ipn_params, [settings], callback);
+```
+
+`ipn_params` is the dictionary of POST values sent to your IPN script by PayPal. Don&#x27;t modify the dict in any way, just pass
+ it directly to `ipn.verify` to check if the IPN message is valid.
+
+
+Example code:
+...</pre></li>
+    </ul>
+
+
+
+
+</div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.paypal-ipn.paypal_ipn" id="apidoc.module.paypal-ipn.paypal_ipn">module paypal-ipn.paypal_ipn</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.paypal-ipn.paypal_ipn.verify" id="apidoc.element.paypal-ipn.paypal_ipn.verify">
+        function <span class="apidocSignatureSpan">paypal-ipn.paypal_ipn.</span>verify
+        <span class="apidocSignatureSpan">(params, settings, callback)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function verify(params, settings, callback) {
+  //Settings are optional, use default settings if not set
+  if (typeof callback === &#x27;undefined&#x27; &#x26;&#x26; typeof settings === &#x27;function&#x27;) {
+    callback = settings;
+    settings = {
+      &#x27;allow_sandbox&#x27;: false
+    };
+  }
+
+  if (typeof params === &#x27;undefined&#x27;) {
+    process.nextTick(function () {
+      callback(new Error(&#x27;No params were passed to ipn.verify&#x27;));
+    });
+    return;
+  }
+
+  params.cmd = &#x27;_notify-validate&#x27;;
+
+  var body = qs.stringify(params);
+
+  //Set up the request to paypal
+  var req_options = {
+    host: (params.test_ipn) ? SANDBOX_URL : REGULAR_URL,
+    method: &#x27;POST&#x27;,
+    path: &#x27;/cgi-bin/webscr&#x27;,
+    headers: {&#x27;Content-Length&#x27;: body.length}
+  };
+
+  if (params.test_ipn &#x26;&#x26; !settings.allow_sandbox) {
+    process.nextTick(function () {
+      callback(new Error(&#x27;Received request with test_ipn parameter while sandbox is disabled&#x27;));
+    });
+    return;
+  }
+
+  var req = https.request(req_options, function paypal_request(res) {
+    var data = [];
+
+    res.on(&#x27;data&#x27;, function paypal_response(d) {
+      data.push(d);
+    });
+
+    res.on(&#x27;end&#x27;, function response_end() {
+      var response = data.join(&#x27;&#x27;);
+
+      //Check if IPN is valid
+      if (response === &#x27;VERIFIED&#x27;) {
+        callback(null, response);
+      } else {
+        callback(new Error(&#x27;IPN Verification status: &#x27; + response));
+      }
+    });
+  });
+
+  //Add the post parameters to the request body
+  req.write(body);
+
+  //Request error
+  req.on(&#x27;error&#x27;, callback);
+
+  req.end();
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+$ npm install paypal-ipn
+```
+
+## Usage
+There is only one function, `verify`, which is used to verify any IPN messages you receive:
+
+```javascript
+ipn.<span class="apidocCodeKeywordSpan">verify</span>(ipn_params, [settings], callback);
+```
+
+`ipn_params` is the dictionary of POST values sent to your IPN script by PayPal. Don&#x27;t modify the dict in any way, just pass
+ it directly to `ipn.verify` to check if the IPN message is valid.
+
+
+Example code:
+...</pre></li>
+    </ul>
+
+
+</div>
+
+<div class="apidocFooterDiv">
+    [ this document was created with
+    <a href="https://github.com/kaizhu256/node-utility2" target="_blank">utility2</a>
+    ]
+</div>
+</div>
